@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>E-Commerce Website – HTML CSS JS</title>
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --accent:#2563eb;
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box;font-family:Inter,Roboto,sans-serif;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+header{
+  background:var(--card);
+  padding:15px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+header h1{margin:0;font-size:22px;}
+.cart-btn{
+  background:var(--accent);
+  border:none;
+  color:white;
+  padding:8px 14px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+}
+.container{
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+}
+.product{
+  background:var(--card);
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+.product img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:8px;
+}
+.product h3{margin:10px 0 4px;}
+.product p{margin:0;color:var(--muted);}
+.add-btn{
+  margin-top:8px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .2s;
+}
+.add-btn:hover{background:#1d4ed8;}
+#cartModal{
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.cart-content{
+  background:var(--card);
+  width:90%;
+  max-width:500px;
+  padding:20px;
+  border-radius:12px;
+  max-height:80vh;
+  overflow-y:auto;
+}
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  background:#0f172a;
+  padding:10px;
+  border-radius:8px;
+}
+.cart-item img{width:50px;height:50px;border-radius:6px;object-fit:cover;}
+.cart-item div{flex:1;margin-left:10px;}
+.remove-btn{
+  background:#ef4444;
+  border:none;
+  color:white;
+  padding:5px 8px;
+  border-radius:6px;
+  cursor:pointer;
+}
+.total{
+  text-align:right;
+  font-weight:600;
+  margin-top:10px;
+}
+.close-btn{
+  background:#16a34a;
+  border:none;
+  color:white;
+  padding:8px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 My E-Commerce</h1>
+  <button class="cart-btn" id="openCart">View Cart (<span id="cartCount">0</span>)</button>
+</header>
+
+<div class="container" id="productList"></div>
+
+<!-- Cart Modal -->
+<div id="cartModal">
+  <div class="cart-content">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <div class="total" id="cartTotal"></div>
+    <button class="close-btn" id="closeCart">Close</button>
+  </div>
+</div>
+
+<script>
+const products = [
+  {id:1,name:"Wireless Headphones",price:1499,img:"https://picsum.photos/300/200?1"},
+  {id:2,name:"Smart Watch",price:2499,img:"https://picsum.photos/300/200?2"},
+  {id:3,name:"Bluetooth Speaker",price:999,img:"https://picsum.photos/300/200?3"},
+  {id:4,name:"Gaming Mouse",price:799,img:"https://picsum.photos/300/200?4"},
+  {id:5,name:"Keyboard",price:1299,img:"https://picsum.photos/300/200?5"},
+  {id:6,name:"Laptop Stand",price:699,img:"https://picsum.photos/300/200?6"}
+];
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+function saveCart(){
+  localStorage.setItem("cart",JSON.stringify(cart));
+}
+
+function renderProducts(){
+  const list=document.getElementById("productList");
+  list.innerHTML="";
+  products.forEach(p=>{
+    const div=document.createElement("div");
+    div.className="product";
+    div.innerHTML=`
+      <img src="${p.img}" alt="${p.name}">
+      <h3>${p.name}</h3>
+      <p>₹${p.price}</p>
+      <button class="add-btn" onclick="addToCart(${p.id})">Add to Cart</button>
+    `;
+    list.appendChild(div);
+  });
+}
+function addToCart(id){
+  const prod=products.find(p=>p.id===id);
+  const existing=cart.find(item=>item.id===id);
+  if(existing) existing.qty++;
+  else cart.push({...prod,qty:1});
+  saveCart();
+  updateCartCount();
+  alert(${prod.name} added to cart!);
+}
+function updateCartCount(){
+  document.getElementById("cartCount").textContent=cart.reduce((a,b)=>a+b.qty,0);
+}
+function renderCart(){
+  const itemsDiv=document.getElementById("cartItems");
+  const totalDiv=document.getElementById("cartTotal");
+  itemsDiv.innerHTML="";
+  if(cart.length===0){
+    itemsDiv.innerHTML="<p style='text-align:center;color:var(--muted)'>Cart is empty</p>";
+    totalDiv.textContent="";
+    return;
+  }
+  let total=0;
+  cart.forEach((item,i)=>{
+    total+=item.price*item.qty;
+    const div=document.createElement("div");
+    div.className="cart-item";
+    div.innerHTML=`
+      <img src="${item.img}">
+      <div>
+        <strong>${item.name}</strong><br>
+        ₹${item.price} × ${item.qty}
+      </div>
+      <button class="remove-btn" onclick="removeItem(${i})">Remove</button>
+    `;
+    itemsDiv.appendChild(div);
+  });
+  totalDiv.textContent=Total: ₹${total};
+}
+function removeItem(index){
+  cart.splice(index,1);
+  saveCart();
+  renderCart();
+  updateCartCount();
+}
+document.getElementById("openCart").addEventListener("click",()=>{
+  document.getElementById("cartModal").style.display="flex";
+  renderCart();
+});
+document.getElementById("closeCart").addEventListener("click",()=>{
+  document.getElementById("cartModal").style.display="none";
+});
+renderProducts();
+updateCartCount();
+</script>
+</body>
+</html>
