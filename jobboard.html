@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Board – HTML CSS JS</title>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --accent:#2563eb;
+    --text:#e2e8f0;
+    --muted:#94a3b8;
+  }
+  *{box-sizing:border-box;font-family:Inter,Roboto,sans-serif;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    padding:20px;
+  }
+  h1{margin:0 0 12px;text-align:center;}
+  .container{
+    background:var(--card);
+    width:100%;
+    max-width:700px;
+    padding:20px;
+    border-radius:14px;
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+  }
+  form{
+    display:grid;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  input,textarea{
+    width:100%;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    outline:none;
+    font-size:15px;
+  }
+  textarea{resize:vertical;min-height:60px;}
+  button{
+    padding:10px 16px;
+    background:var(--accent);
+    border:none;
+    border-radius:8px;
+    color:white;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .2s;
+  }
+  button:hover{background:#1d4ed8;}
+  .search-bar{
+    margin-bottom:15px;
+    display:flex;
+    gap:10px;
+  }
+  .search-bar input{
+    flex:1;
+    border-radius:8px;
+  }
+  .job{
+    background:#0f172a;
+    padding:14px;
+    border-radius:10px;
+    margin-bottom:10px;
+    border:1px solid rgba(255,255,255,0.05);
+  }
+  .job h3{margin:0;font-size:18px;}
+  .job small{color:var(--muted);}
+  .job p{margin:8px 0 10px;font-size:14px;color:var(--muted);}
+  .job .actions{display:flex;justify-content:flex-end;}
+  .job .actions button{
+    background:#ef4444;
+    font-size:13px;
+    padding:6px 10px;
+  }
+  .no-jobs{
+    text-align:center;
+    color:var(--muted);
+    font-style:italic;
+  }
+</style>
+</head>
+<body>
+  <h1>💼 Simple Job Board</h1>
+  <div class="container">
+    <form id="jobForm">
+      <input type="text" id="title" placeholder="Job Title" required>
+      <input type="text" id="company" placeholder="Company Name" required>
+      <input type="text" id="location" placeholder="Location" required>
+      <textarea id="description" placeholder="Job Description" required></textarea>
+      <button type="submit">Add Job</button>
+    </form>
+
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Search jobs by title, company, or location...">
+      <button id="clearAll">Clear All</button>
+    </div>
+
+    <div id="jobList"></div>
+  </div>
+
+<script>
+const jobForm = document.getElementById("jobForm");
+const jobList = document.getElementById("jobList");
+const searchInput = document.getElementById("search");
+const clearAllBtn = document.getElementById("clearAll");
+
+let jobs = JSON.parse(localStorage.getItem("jobs")) || [];
+
+function saveJobs() {
+  localStorage.setItem("jobs", JSON.stringify(jobs));
+}
+
+function renderJobs(filter="") {
+  jobList.innerHTML = "";
+  const filtered = jobs.filter(job => {
+    const q = filter.toLowerCase();
+    return (
+      job.title.toLowerCase().includes(q) ||
+      job.company.toLowerCase().includes(q) ||
+      job.location.toLowerCase().includes(q)
+    );
+  });
+
+  if (filtered.length === 0) {
+    jobList.innerHTML = <div class="no-jobs">No jobs found</div>;
+    return;
+  }
+
+  filtered.forEach((job, index) => {
+    const div = document.createElement("div");
+    div.className = "job";
+    div.innerHTML = `
+      <h3>${job.title}</h3>
+      <small>${job.company} • ${job.location}</small>
+      <p>${job.description}</p>
+      <div class="actions">
+        <button onclick="deleteJob(${index})">Delete</button>
+      </div>
+    `;
+    jobList.appendChild(div);
+  });
+}
+
+jobForm.addEventListener("submit", e => {
+  e.preventDefault();
+  const title = document.getElementById("title").value.trim();
+  const company = document.getElementById("company").value.trim();
+  const location = document.getElementById("location").value.trim();
+  const description = document.getElementById("description").value.trim();
+  if (!title || !company || !location || !description) return alert("Please fill all fields");
+
+  const newJob = { title, company, location, description };
+  jobs.push(newJob);
+  saveJobs();
+  jobForm.reset();
+  renderJobs(searchInput.value);
+});
+
+function deleteJob(index) {
+  if (confirm("Delete this job?")) {
+    jobs.splice(index, 1);
+    saveJobs();
+    renderJobs(searchInput.value);
+  }
+}
+
+clearAllBtn.addEventListener("click", ()=>{
+  if (confirm("Clear all job listings?")) {
+    jobs = [];
+    saveJobs();
+    renderJobs();
+  }
+});
+
+searchInput.addEventListener("input", e => renderJobs(e.target.value));
+
+// first load
+renderJobs();
+</script>
+</body>
+</html>
